@@ -7,7 +7,7 @@ import Data.Foldable qualified as F
 import Data.Text qualified as Text
 import Data.Text.Builder.Linear qualified as T
 import Data.Time (UTCTime)
-import Bobr.Logger.General (Label (..), LoggerHandle (..), LoggerHandleContext (LoggerHandleContext), LoggerHandleSettings (..), PutLog)
+import Bobr.Logger.General (Label (..), LoggerHandle (..), LoggerHandleContext (LoggerHandleContext), LoggerHandleSettings (..), PutLog, Namespace (..))
 import Bobr.Severity (Severity, severityToText)
 import qualified Data.Text.Encoding as Text.Encode
 import qualified Data.ByteString.Builder.Prim as Builder
@@ -34,7 +34,7 @@ defaultJsonLoggerConfig loc =
 
 mkJsonLogger :: JsonLoggerConfig time severity -> PutLog IO -> LoggerHandle IO time severity
 mkJsonLogger JsonLoggerConfig{..} logAction =
-  let attachMessage rdn rdl msg stamp severity =
+  let attachMessage (Namespace rdn _) rdl msg stamp severity =
         let message =
               J.fromEncoding . J.pairs $
                 J.pair "message" (J.text $ T.runBuilder msg)
@@ -56,7 +56,7 @@ mkJsonLogger JsonLoggerConfig{..} logAction =
                   let new = Text.intercalate "." (F.toList n)
                   in if Text.null new then old else Just $ maybe (quote new) (\old' -> old' <> "." <> quote new) old
               }
-        , context = LoggerHandleContext Nothing Nothing 
+        , context = LoggerHandleContext (Namespace Nothing mempty) Nothing 
         }
 
 quote :: Text.Text -> Bytes.Builder.Builder

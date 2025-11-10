@@ -2,6 +2,8 @@
 
 module Bobr.QuickStart.Output.Console where
 
+import Bobr.Logger.General (Label (..), LoggerHandle (..), LoggerHandleContext (LoggerHandleContext), LoggerHandleSettings (..), Namespace (..), PutLog)
+import Bobr.Severity (Severity (..), severityToText)
 import Control.Applicative ((<|>))
 import Control.Monad.IO.Class (MonadIO (..))
 import Data.Aeson qualified as J
@@ -20,8 +22,6 @@ import Data.Text.Builder.Linear qualified as Text.Linear
 import Data.Text.Lazy qualified as TL
 import Data.Time (getCurrentTimeZone)
 import Data.Time qualified as Time
-import Bobr.Logger.General (Label (..), LoggerHandle (..), LoggerHandleContext (LoggerHandleContext), LoggerHandleSettings (..), PutLog)
-import Bobr.Severity (Severity (..), severityToText)
 import System.Console.ANSI (Color (..), ColorIntensity (..), ConsoleLayer (..), SGR (..), setSGRCode)
 
 data ConsoleLoggerConfig time severity = ConsoleLoggerConfig
@@ -60,8 +60,8 @@ defaultConsoleLoggerConfig timestampFormat = liftIO do
 mkConsoleLogger :: forall time severity. ConsoleLoggerConfig time severity -> PutLog IO -> LoggerHandle IO time severity
 mkConsoleLogger ConsoleLoggerConfig{..} logAction =
   let
-    attachMessage :: Maybe B.Builder -> Maybe B.Builder -> B.Builder -> time -> severity -> Bytes.Builder
-    attachMessage rdn rdl msg stamp severity =
+    attachMessage :: Namespace (Maybe B.Builder) -> Maybe B.Builder -> B.Builder -> time -> severity -> Bytes.Builder
+    attachMessage (Namespace rdn _) rdl msg stamp severity =
       Bytes.byteString . B.runBuilderBS $
         fold
           [ maybe "" (\t -> printTimestamp $ "[" <> t <> "]") (formatTime stamp)
@@ -94,7 +94,7 @@ mkConsoleLogger ConsoleLoggerConfig{..} logAction =
                       (Just o, Just n) -> Just $ o <> " " <> n
                       (o, n) -> o <|> n
             }
-      , context = LoggerHandleContext Nothing Nothing
+      , context = LoggerHandleContext (Namespace Nothing mempty) Nothing
       }
  where
   renderValues :: Text.Text -> J.Value -> [(B.Builder, B.Builder)]
@@ -117,19 +117,31 @@ mkConsoleLogger ConsoleLoggerConfig{..} logAction =
              in vals <&> \(k, v) -> "#" <> printKey k <> "=" <> printValue v
         )
 
-  formatNamespace ns = format namespaceColor <> ns <> reset
+  formatNamespace ns
+    | null namespaceColor = ns
+    | otherwise = format namespaceColor <> ns <> reset
 
   printSeverity :: severity -> B.Builder
-  printSeverity sev = format (severityColor sev) <> "[" <> formatSeverity sev <> "]" <> reset
+  printSeverity sev =
+    let color = severityColor sev
+     in if null color
+          then formatSeverity sev
+          else format color <> "[" <> formatSeverity sev <> "]" <> reset
 
   formatTimestamp = format timestampColor
-  printTimestamp ts = formatTimestamp <> ts <> reset
+  printTimestamp ts
+    | null timestampColor = ts 
+    | otherwise = formatTimestamp <> ts <> reset
 
   formatKey = format labelKeyColor
-  printKey k = formatKey <> k <> reset
+  printKey k
+    | null labelKeyColor = k
+    | otherwise = formatKey <> k <> reset
 
   formatValue = format labelValueColor
-  printValue v = formatValue <> v <> reset
+  printValue v 
+    | null labelValueColor = v
+    | otherwise = formatValue <> v <> reset
 
   format :: [SGR] -> B.Builder
   format sgr = B.fromText $ T.pack (setSGRCode sgr)
