@@ -1,4 +1,4 @@
-module Pew.Severity where
+module Bobr.Severity where
 
 import Data.Text qualified as T
 

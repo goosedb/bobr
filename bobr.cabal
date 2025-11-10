@@ -1,5 +1,5 @@
 cabal-version: 3.0
-name:          pew
+name:          bobr
 version:       0.1.0.0
 synopsis:
 description:   Backend agnostic structured logger
@@ -9,16 +9,16 @@ maintainer:    goosedb@yandex.ru
 library
   -- cabal-fmt: expand src/
   exposed-modules:
-    Pew.Logger.General
-    Pew.Logger.Interface.Implicit
-    Pew.Logger.Interface.Monad
-    Pew.QuickStart.Backend.Async
-    Pew.QuickStart.Backend.Pure
-    Pew.QuickStart.Interface.Implicit
-    Pew.QuickStart.Interface.Monad
-    Pew.QuickStart.Output.Console
-    Pew.QuickStart.Output.Json
-    Pew.Severity
+    Bobr.Logger.General
+    Bobr.Logger.Interface.Implicit
+    Bobr.Logger.Interface.Monad
+    Bobr.QuickStart.Backend.Async
+    Bobr.QuickStart.Backend.Pure
+    Bobr.QuickStart.Interface.Implicit
+    Bobr.QuickStart.Interface.Monad
+    Bobr.QuickStart.Output.Console
+    Bobr.QuickStart.Output.Json
+    Bobr.Severity
 
   build-depends:
     , aeson
@@ -46,7 +46,7 @@ library
     RankNTypes
     RecordWildCards
 
-test-suite pew-test
+test-suite bobr-test
   type:             exitcode-stdio-1.0
   main-is:          Test.hs
   default-language: GHC2021
@@ -61,5 +61,5 @@ test-suite pew-test
     , hspec
     , hspec-expectations
     , mtl
-    , pew
+    , bobr
     , time

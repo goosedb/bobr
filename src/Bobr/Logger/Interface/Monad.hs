@@ -5,15 +5,16 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
-module Pew.Logger.Interface.Monad where
+module Bobr.Logger.Interface.Monad where
 
 import Data.Text (Text)
 import Data.Text.Builder.Linear qualified as T
-import Pew.Logger.General (Label)
-import Pew.Logger.General qualified as G
+import Bobr.Logger.General (Label)
+import Bobr.Logger.General qualified as G
 
-class (MonadLoggerTime time m) => MonadLogger time severity m where
+class (MonadLoggerTime time m) => MonadLogger time severity m | m -> time, m -> severity where
   getLogger :: m (G.LoggerHandle m time severity)
   localLogger :: (G.LoggerHandle m time severity -> G.LoggerHandle m time severity) -> m a -> m a
 

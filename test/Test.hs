@@ -21,22 +21,22 @@ import Data.Maybe (fromJust)
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
 import Data.Time (UTCTime (UTCTime), addUTCTime, fromGregorian, getCurrentTime)
-import Pew.Logger.General (LoggerHandle, pushNamespace, (.>), PutLog)
-import Pew.Logger.Interface.Implicit qualified as I
-import Pew.Logger.Interface.Monad (MonadLogger (..), MonadLoggerTime (getTime), pushNamespace)
-import Pew.QuickStart.Backend.Pure (Message (..), withPureLogger)
-import Pew.QuickStart.Interface.Implicit qualified as QI
-import Pew.QuickStart.Interface.Monad qualified as M
-import Pew.QuickStart.Output.Console (mkConsoleLogger)
-import Pew.QuickStart.Output.Json (ContextLocation (..), JsonLoggerConfig (..), defaultJsonLoggerConfig, mkJsonLogger)
-import Pew.Severity (Severity (..))
+import Bobr.Logger.General (LoggerHandle, pushNamespace, (|>), PutLog)
+import Bobr.Logger.Interface.Implicit qualified as I
+import Bobr.Logger.Interface.Monad (MonadLogger (..), MonadLoggerTime (getTime), pushNamespace)
+import Bobr.QuickStart.Backend.Pure (Message (..), withPureLogger)
+import Bobr.QuickStart.Interface.Implicit qualified as QI
+import Bobr.QuickStart.Interface.Monad qualified as M
+import Bobr.QuickStart.Output.Console (mkConsoleLogger)
+import Bobr.QuickStart.Output.Json (ContextLocation (..), JsonLoggerConfig (..), defaultJsonLoggerConfig, mkJsonLogger)
+import Bobr.Severity (Severity (..))
 import Test.Hspec
-import Pew.QuickStart.Backend.Async (withAsyncPutLog)
+import Bobr.QuickStart.Backend.Async (withAsyncPutLog)
 import Control.Concurrent (threadDelay, yield)
 import Data.Foldable (for_)
 import GHC.IO (throwIO)
 import Control.Exception (AsyncException(UserInterrupt), handle, try)
-import Pew.QuickStart.Backend.Async (Worker, killBackgroundLogger)
+import Bobr.QuickStart.Backend.Async (Worker, killBackgroundLogger)
 import GHC.Exts (IsString(..))
 import GHC.Conc (newTVarIO, TVar, atomically, readTVar, writeTVar, readTVarIO, registerDelay)
 import qualified Data.Aeson.KeyMap as KeyMap
@@ -92,7 +92,7 @@ main = hspec do
           QI.info "aloha"
           QI.pushNamespace ["bar"] do
             QI.info "salut"
-          QI.withLabels ["bar" .> True, "baz" .> 'a'] do
+          QI.withLabels ["bar" |> True, "baz" |> 'a'] do
             QI.info "привет"
 
     it "json" do
@@ -119,28 +119,28 @@ main = hspec do
       it "labels" do
         let logs = runPureLogger do
               I.logMsg Debug "hello"
-              I.withLabel ("foo" .> True) do
+              I.withLabel ("foo" |> True) do
                 I.logMsg Warning "привет"
-                I.withLabels ["bar" .> 'a', "baz" .> ()] do
+                I.withLabels ["bar" |> 'a', "baz" |> ()] do
                   I.logMsg Error "aloha"
         logs
           `shouldBe` [ msg{message = "hello", severity = Debug}
-                     , msg{message = "привет", labels = ["foo" .> True], severity = Warning}
-                     , msg{message = "aloha", labels = ["foo" .> True, "bar" .> 'a', "baz" .> ()], severity = Error}
+                     , msg{message = "привет", labels = ["foo" |> True], severity = Warning}
+                     , msg{message = "aloha", labels = ["foo" |> True, "bar" |> 'a', "baz" |> ()], severity = Error}
                      ]
       it "labels & namespace" do
         let logs = runPureLogger do
               I.logMsg Debug "hello"
               I.pushNamespace ["foo"] do
                 I.logMsg Notice "salut"
-                I.withLabel ("foo" .> True) do
+                I.withLabel ("foo" |> True) do
                   I.logMsg Warning "привет"
                   I.pushNamespace ["bar"] do
-                    I.withLabels ["bar" .> 'a', "baz" .> ()] do
+                    I.withLabels ["bar" |> 'a', "baz" |> ()] do
                       I.logMsg Error "aloha"
         logs
           `shouldBe` [ msg{message = "hello", severity = Debug}
                      , msg{message = "salut", namespace = ["foo"], severity = Notice}
-                     , msg{message = "привет", namespace = ["foo"], labels = ["foo" .> True], severity = Warning}
-                     , msg{message = "aloha", namespace = ["foo", "bar"], labels = ["foo" .> True, "bar" .> 'a', "baz" .> ()], severity = Error}
+                     , msg{message = "привет", namespace = ["foo"], labels = ["foo" |> True], severity = Warning}
+                     , msg{message = "aloha", namespace = ["foo", "bar"], labels = ["foo" |> True, "bar" |> 'a', "baz" |> ()], severity = Error}
                      ]

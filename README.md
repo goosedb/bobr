@@ -1,27 +1,26 @@
-# Pew
+# Bobr
 
-Pew is backend agnostic structured logger. There are usage examples below
+Bobr is backend agnostic structured logger. There are usage examples below
 
 ```haskell
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
-import Pew.Logger.Output.Json
-import Pew.Logger.Implicit
-import Pew.Logger.Config 
-import Pew.Severity
+import Bobr.QuickStart.Output.Json
+import Bobr.QuickStart.Interface.Implicit 
 import Data.ByteString.Builder
 import System.IO
+import Data.Time
 
 main :: IO ()
 main = do
-  logger <- mkJsonLogger 
-    (LoggerConfig severityToText (const True)) 
-    (hPutBuilder stdout)
+  let logger = mkJsonLogger 
+        (defaultJsonLoggerConfig (InsideObject "data")) 
+        (hPutBuilder stdout)
 
-  withLogger logger do
-    logMsg Debug "kek"
-    withLabel "foo" (1 :: Int) do 
-      logMsg Info "lol"
+  withLogger logger getCurrentTime do 
+    debug "kek"
+    withLabel ("foo" |> (1 :: Int)) do 
+      info "lol"
 
 ```
 Produces
@@ -33,28 +32,25 @@ Sometimes JSON logs aren't very convenient. For example when you are running pro
 ```haskell
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
-import Pew.Logger.Output.Console
-import Pew.Logger.Implicit
-import Pew.Logger.Config 
-import Pew.Severity
+import Bobr.QuickStart.Output.Console
+import Bobr.QuickStart.Interface.Implicit 
 import Data.ByteString.Builder
 import System.IO
+import Data.Time
 
 main :: IO ()
 main = do
-  -- you can configure colors if you want 
-  logger <- mkConsoleTextLogger 
-    (ConsoleLoggerConfig (const []) [] [] [] "%H:%M:%S") 
-    (LoggerConfig severityToText (const True)) 
-    (hPutBuilder stdout)
+  logger <- mkConsoleLogger 
+    <$> defaultConsoleLoggerConfig "%X"
+    <*> pure (hPutBuilder stdout)
 
-  withLogger logger do
-    logMsg Debug "kek"
-    withLabel "foo" (1 :: Int) do 
-      logMsg Info "lol"
+  withLogger logger getCurrentTime do 
+    debug "kek"
+    withLabel ("foo" |> (1 :: Int)) do 
+      info "lol"
 ```
 Produces
 ```
 [17:01:50] [Debug] kek
-[17:01:50] {#foo=1} [Info] lol
+[17:01:50] [Info] #foo=1 lol
 ```
